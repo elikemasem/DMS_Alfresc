@@ -2,17 +2,20 @@ package org.corbantech.DMS_With_Alfresco.service.serviceImpl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hc.core5.http.Header;
 import org.corbantech.DMS_With_Alfresco.Utils.JsonUtils;
-import org.corbantech.DMS_With_Alfresco.dto.ContainerDTO;
-import org.corbantech.DMS_With_Alfresco.dto.SitesDTO;
-import org.corbantech.DMS_With_Alfresco.dto.TicketResponseDTO;
-import org.corbantech.DMS_With_Alfresco.dto.UserTicketDTO;
+import org.corbantech.DMS_With_Alfresco.dto.*;
 import org.corbantech.DMS_With_Alfresco.service.serviceInterface.AlfrescoServiceInterface;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.*;
 
 
@@ -149,6 +152,77 @@ public class AlfrescoServiceImpl implements AlfrescoServiceInterface {
        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
        return JsonUtils.fromJsonToObject(response.getBody(), ContainerDTO.class);
     }
+
+    @Override
+    public NodeDTO getNodesByNodeId(String nodeId) {
+        String url = baseUrl + "/nodes/" + nodeId;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBasicAuth(defaultUsername, defaultPassword);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+        return JsonUtils.fromJsonToObject(response.getBody(), NodeDTO.class);
+    }
+
+    @Override
+    public List<NodeListDTO> getChidrenByNodeId(String nodeId) {
+        String url = baseUrl + "/nodes/" + nodeId + "/children";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBasicAuth(defaultUsername, defaultPassword);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+        return JsonUtils.fromJsonToList(response.getBody(), NodeListDTO.class);
+    }
+
+    @Override
+    public byte[] downloadContent(String nodeId) {
+        String url = baseUrl + "/nodes/" + nodeId + "/content";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBasicAuth(defaultUsername, defaultPassword);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_OCTET_STREAM)); // Expect binary
+
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<byte[]> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                byte[].class
+        );
+
+        if (response.getStatusCode().is2xxSuccessful()) {
+            return response.getBody();
+        } else {
+            throw new RuntimeException("Failed to download content. Status code: " + response.getStatusCode());
+        }
+    }
+
+    public void uploadFile(String parentNodeId, MultipartFile file) throws IOException {
+        String url = baseUrl + "/nodes/" + parentNodeId + "/children";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBasicAuth(defaultUsername, defaultPassword);
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("filedata", new ByteArrayResource(file.getBytes()) {
+            @Override
+            public String getFilename() {
+                return file.getOriginalFilename();
+            }
+        });
+        body.add("name", file.getOriginalFilename());
+        body.add("nodeType", "cm:content");
+
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class);
+        log.info("Upload response: {}", response.getBody());
+    }
+
+
 
 /*    private List<SitesDTO> extractSitesFromMap(Map<String, Object> responseBody) {
         List<SitesDTO> sites = new ArrayList<>();

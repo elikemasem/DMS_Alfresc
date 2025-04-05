@@ -37,4 +37,10 @@ public class JsonUtils {
         T object = objectMapper.convertValue(responseBody.get("entry"), clazz);
         return object;
     }
+
+    public static <T> T getErrorMessage(Map<String, Object> responseBody, Class<T> clazz) {
+        if (responseBody == null) return null;
+        T object = objectMapper.convertValue(responseBody.get("error"), clazz);
+        return object;
+    }
 }
