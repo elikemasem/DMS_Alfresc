@@ -2,6 +2,7 @@ package org.corbantech.DMS_With_Alfresco.controller;
 
 
 import lombok.extern.slf4j.Slf4j;
+import org.corbantech.DMS_With_Alfresco.dto.ContainerDTO;
 import org.corbantech.DMS_With_Alfresco.dto.ResponseDTO;
 import org.corbantech.DMS_With_Alfresco.dto.SitesDTO;
 import org.corbantech.DMS_With_Alfresco.dto.UserTicketDTO;
@@ -67,6 +68,51 @@ public class AlfrescoController {
         }
 
 
+    }
+
+    @GetMapping("/sites/{siteId}")
+    public ResponseEntity<ResponseDTO> getSiteById(@PathVariable(name = "siteId", required = true) String siteId) {
+        try {
+            if (siteId == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseDTO(400, "Invalid Site Id", LocalDateTime.now(), "/alfresco/sites", null));
+            }
+            SitesDTO sitesDTO = alfrescoService.getSite(siteId);
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO(200, "Success", LocalDateTime.now(), "/alfresco/sites", sitesDTO));
+        } catch (Exception e) {
+            log.error("Error retrieving Alfresco site: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ResponseDTO(500, "Error Occured", LocalDateTime.now(), "/alfresco/sites", null));
+        }
+
+    }
+
+    @GetMapping("/sites/{siteId}/containers")
+    public ResponseEntity<ResponseDTO> getContainersBySiteId(@PathVariable(name = "siteId", required = true) String siteId) {
+        try {
+            if (siteId == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseDTO(400, "Site Id must be present", LocalDateTime.now(), "/alfresco/sites", null));
+            }
+            List<ContainerDTO> containerDTOS = alfrescoService.listContainerBySiteId(siteId);
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO(200, "Success", LocalDateTime.now(), "/alfresco/containers", containerDTOS));
+        }catch (Exception e) {
+            log.error("Error retrieving Alfresco site: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ResponseDTO(500, "Error Occured", LocalDateTime.now(), "/alfresco/sites", null));
+        }
+    }
+
+    @GetMapping("/sites/{siteId}/containers/{containerId}")
+    public ResponseEntity<ResponseDTO> getContainerDetailsWithContainerIdAndSiteId(@PathVariable(name = "siteId", required = true) String siteId, @PathVariable(name = "containerId", required = true) String containerId) {
+
+        try {
+            if (containerId == null || containerId.isEmpty() || siteId == null || siteId.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseDTO(400, "Site Id and Container Id Required", LocalDateTime.now(), "/alfresco/containers", null));
+            }
+            ContainerDTO containerDTO = alfrescoService.getContainerBySiteIdAndContainerId(siteId, containerId);
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO(200, "Success", LocalDateTime.now(), "/alfresco/containers", containerDTO));
+
+        } catch (Exception e) {
+            log.error("Error retrieving Alfresco site: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ResponseDTO(500, "Error Occured", LocalDateTime.now(), "/alfresco/sites", null));
+        }
     }
 
 
