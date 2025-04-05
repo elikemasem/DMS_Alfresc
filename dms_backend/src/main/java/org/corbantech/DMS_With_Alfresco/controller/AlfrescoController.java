@@ -1,16 +1,16 @@
 package org.corbantech.DMS_With_Alfresco.controller;
 
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import lombok.extern.slf4j.Slf4j;
-import org.corbantech.DMS_With_Alfresco.dto.ContainerDTO;
-import org.corbantech.DMS_With_Alfresco.dto.ResponseDTO;
-import org.corbantech.DMS_With_Alfresco.dto.SitesDTO;
-import org.corbantech.DMS_With_Alfresco.dto.UserTicketDTO;
+import org.corbantech.DMS_With_Alfresco.dto.*;
 import org.corbantech.DMS_With_Alfresco.service.serviceImpl.AlfrescoServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -114,6 +114,89 @@ public class AlfrescoController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ResponseDTO(500, "Error Occured", LocalDateTime.now(), "/alfresco/sites", null));
         }
     }
+
+    @GetMapping("/nodes/{nodeId}")
+    public ResponseEntity<ResponseDTO> listNodeById(@PathVariable(name = "nodeId",  required = true) String nodeId){
+        log.info("This in the list node ");
+        try {
+            if (nodeId == null || nodeId.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseDTO(400, "Node Id Required", LocalDateTime.now(), "/alfresco/nodes", null));
+            } else if (!(nodeId.equalsIgnoreCase("-root-") || nodeId.equalsIgnoreCase("-shared-") || nodeId.equalsIgnoreCase("-my-"))) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseDTO(400, "Invalid Node Id", LocalDateTime.now(), "/alfresco/nodes", null));
+            }
+            log.debug("Trying to list node {}", nodeId.toLowerCase());
+            NodeDTO nodeDTO = alfrescoService.getNodesByNodeId(nodeId.toLowerCase());
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO(200, "Success", LocalDateTime.now(), "/alfresco/nodes", nodeDTO));
+        }catch (Exception e) {
+            log.error("Error retrieving Alfresco node: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ResponseDTO(500, "Error Occured", LocalDateTime.now(), "/alfresco/nodes", null));
+        }
+    }
+
+    @GetMapping("/nodes/{nodeId}/children")
+    public ResponseEntity<ResponseDTO> listNodeChildren(@PathVariable(name = "nodeId", required = true) String nodeId){
+        log.info("This in the list node ");
+        try {
+            if (nodeId == null || nodeId.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseDTO(400, "Node Id Required", LocalDateTime.now(), "/alfresco/nodes", null));
+            } else if (!(nodeId.equalsIgnoreCase("-root-") || nodeId.equalsIgnoreCase("-shared-") || nodeId.equalsIgnoreCase("-my-"))) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseDTO(400, "Invalid Node Id", LocalDateTime.now(), "/alfresco/nodes", null));
+            }
+            log.debug("Trying to list node {}", nodeId.toLowerCase());
+            List<NodeListDTO> nodeDTO = alfrescoService.getChidrenByNodeId(nodeId.toLowerCase());
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO(200, "Success", LocalDateTime.now(), "/alfresco/nodes", nodeDTO));
+        }catch (Exception e) {
+            log.error("Error retrieving Alfresco node: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ResponseDTO(500, "Error Occured", LocalDateTime.now(), "/alfresco/nodes", null));
+        }
+    }
+
+    @GetMapping("/node/{nodeId}/download")
+    public ResponseEntity<?> downloadContentOfNode(@PathVariable(name = "nodeId") String nodeId) {
+        log.info("Download of content for node: {}", nodeId);
+
+        try {
+            if (nodeId == null || nodeId.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ResponseDTO(400, "Node Id Required", LocalDateTime.now(), "/alfresco/nodes", null));
+            }
+
+            byte[] fileData = alfrescoService.downloadContent(nodeId);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDisposition(ContentDisposition
+                    .attachment()
+                    .filename("downloaded-file") // Optional: You could look up actual file name from metadata
+                    .build());
+
+            return new ResponseEntity<>(fileData, headers, HttpStatus.OK);
+
+        } catch (Exception e) {
+            log.error("Error downloading Alfresco node: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseDTO(500, "Error Occurred", LocalDateTime.now(), "/alfresco/nodes", null));
+        }
+    }
+
+    @Operation(summary = "Upload file to Alfresco")
+    @PostMapping("/upload/{parentId}")
+    public ResponseEntity<?> uploadFile(
+            @PathVariable String parentId,
+            @Parameter(description = "File to upload", content = @Content(mediaType = "multipart/form-data"))
+            @RequestParam("file") MultipartFile file
+    ) {
+        try {
+            alfrescoService.uploadFile(parentId, file);
+            return ResponseEntity.ok("File uploaded successfully.");
+        } catch (Exception e) {
+            log.error("Upload failed", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Upload failed: " + e.getMessage());
+        }
+    }
+
+
+
 
 
 

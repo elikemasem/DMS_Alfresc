@@ -1,11 +1,10 @@
 package org.corbantech.DMS_With_Alfresco.service.serviceInterface;
 
 
-import org.corbantech.DMS_With_Alfresco.dto.ContainerDTO;
-import org.corbantech.DMS_With_Alfresco.dto.SitesDTO;
-import org.corbantech.DMS_With_Alfresco.dto.TicketResponseDTO;
-import org.corbantech.DMS_With_Alfresco.dto.UserTicketDTO;
+import org.corbantech.DMS_With_Alfresco.dto.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface AlfrescoServiceInterface {
@@ -14,4 +13,9 @@ public interface AlfrescoServiceInterface {
     SitesDTO getSite(String siteId);
     List<ContainerDTO> listContainerBySiteId(String siteId);
     ContainerDTO getContainerBySiteIdAndContainerId(String siteId, String containerId);
+    NodeDTO getNodesByNodeId(String nodeId);
+    List<NodeListDTO> getChidrenByNodeId(String nodeId);
+    byte[] downloadContent(String nodeId);
+    void uploadFile(String nodeId, MultipartFile file) throws IOException;
+
 }

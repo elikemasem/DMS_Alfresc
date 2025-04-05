@@ -5,23 +5,21 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class NodeDTO {
-    private List<String> aspectNames;
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class NodeListDTO {
     private String createdAt;
-    private boolean isFile;
     private boolean isFolder;
+    private boolean isFile;
     private NodeUserDTO createdByUser;
     private String modifiedAt;
     private NodeUserDTO modifiedByUser;
     private String name;
     private String id;
     private String nodeType;
-    private PropertiesDTO properties;
+    private ContentDTO content;
     private String parentId;
 }
