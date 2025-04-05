@@ -3,6 +3,7 @@ package org.corbantech.DMS_With_Alfresco.service.serviceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.corbantech.DMS_With_Alfresco.Utils.JsonUtils;
+import org.corbantech.DMS_With_Alfresco.dto.ContainerDTO;
 import org.corbantech.DMS_With_Alfresco.dto.SitesDTO;
 import org.corbantech.DMS_With_Alfresco.dto.TicketResponseDTO;
 import org.corbantech.DMS_With_Alfresco.dto.UserTicketDTO;
@@ -112,6 +113,41 @@ public class AlfrescoServiceImpl implements AlfrescoServiceInterface {
         // Parse entries to SitesDTO
 //        return extractSitesFromMap(response.getBody());
         return JsonUtils.fromJsonToList(response.getBody(), SitesDTO.class);
+    }
+
+    @Override
+    public SitesDTO getSite(String siteId) {
+        String url = baseUrl + "/sites/" + siteId;
+        log.debug("This is the request for site by id: {}",url);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBasicAuth(defaultUsername, defaultPassword);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+
+        return JsonUtils.fromJsonToObject(response.getBody(), SitesDTO.class);
+    }
+
+    @Override
+    public List<ContainerDTO> listContainerBySiteId(String siteId) {
+        String url = baseUrl + "/sites/" + siteId + "/containers";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBasicAuth(defaultUsername, defaultPassword);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+        return JsonUtils.fromJsonToList(response.getBody(), ContainerDTO.class);
+    }
+
+    @Override
+    public ContainerDTO getContainerBySiteIdAndContainerId(String siteId, String containerId) {
+       String url = baseUrl + "/sites/" + siteId + "/containers/" + containerId;
+       HttpHeaders headers = new HttpHeaders();
+       headers.setContentType(MediaType.APPLICATION_JSON);
+       headers.setBasicAuth(defaultUsername, defaultPassword);
+       HttpEntity<Void> entity = new HttpEntity<>(headers);
+       ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+       return JsonUtils.fromJsonToObject(response.getBody(), ContainerDTO.class);
     }
 
 /*    private List<SitesDTO> extractSitesFromMap(Map<String, Object> responseBody) {
