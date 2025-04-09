@@ -25,4 +25,7 @@ alfresco:
     url: "http://159.65.17.122:8080/alfresco/api/-default-/public/authentication/versions/1"
     username: "senba"
     password: "1qaz@WSX"
+  admin-auth:
+    username: "admin"
+    password: "admin"
 
