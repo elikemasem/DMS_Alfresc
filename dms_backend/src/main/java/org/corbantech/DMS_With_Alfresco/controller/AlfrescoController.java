@@ -195,7 +195,21 @@ public class AlfrescoController {
         }
     }
 
-
+    @Operation(summary = "Search for text in a file")
+    @GetMapping("/search/in-file")
+    public ResponseEntity<ResponseDTO> searchInfile(@RequestParam(name = "text", required = true) String text,
+                                                    @RequestParam(name = "size", defaultValue = "10") Integer size,
+                                                    @RequestParam(name = "skipCount", defaultValue = "0") Integer skipCount){
+        try {
+            log.info("Searching for text in a file");
+            log.debug("Text: {} size: {}, skipCount: {}", text, size, skipCount);
+            List<NodeListDTO> list = alfrescoService.returnInfileSearch(text, size, skipCount);
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO(200, "Success", LocalDateTime.now(), "/alfresco/search", list));
+        } catch (Exception e) {
+            log.error("Search failed", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ResponseDTO(500, "Error Occured", LocalDateTime.now(), "/alfresco/search", e.getMessage()));
+        }
+    }
 
 
 

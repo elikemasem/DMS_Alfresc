@@ -14,6 +14,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import org.w3c.dom.NodeList;
 
 import java.io.IOException;
 import java.util.*;
@@ -220,6 +221,30 @@ public class AlfrescoServiceImpl implements AlfrescoServiceInterface {
 
         ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class);
         log.info("Upload response: {}", response.getBody());
+    }
+
+    @Override
+    public List<NodeListDTO> returnInfileSearch(String text, Integer size, Integer skipCount) {
+        log.info("returnInfileSearch text: {}, size: {}", text, size);
+        String query = "TEXT:'" + text + "'";
+        String url = baseUrl + "/search";
+        InFIleSearchDTO inFIleSearchDTO = new InFIleSearchDTO();
+        QueryDTO queryDTO = new QueryDTO("afts", query);
+        PagingDTO pagingDTO = new PagingDTO(size, skipCount);
+        inFIleSearchDTO.setInclude(Arrays.asList("path", "properties"));
+        inFIleSearchDTO.setPaging(pagingDTO);
+        inFIleSearchDTO.setQuery(queryDTO);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBasicAuth(defaultUsername, defaultPassword);
+        Map<String, Object> requestMap = objectMapper.convertValue(inFIleSearchDTO, Map.class);
+        log.debug("This is the request map: {}", requestMap);
+        HttpEntity<Map> entity = new HttpEntity<>( requestMap , headers);
+        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
+
+
+        return JsonUtils.fromJsonToList(response.getBody(), NodeListDTO.class);
     }
 
 
