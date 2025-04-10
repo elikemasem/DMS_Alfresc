@@ -27,6 +27,8 @@ public class AlfrescoServiceImpl implements AlfrescoServiceInterface {
 
     @Value("${alfresco.base-url}")
     private String baseUrl;
+    @Value("${alfresco.search-url}")
+    private String searchUrl;
     @Value("${alfresco.auth.username}")
     private String defaultUsername;
     @Value("${alfresco.auth.password}")
@@ -69,7 +71,6 @@ public class AlfrescoServiceImpl implements AlfrescoServiceInterface {
 
         Map<String, Object> entry = (Map<String, Object>) responseBody.get("entry");
 
-//        return new TicketResponseDTO((String) entry.get("id"), (String) entry.get("userId"));
         return JsonUtils.fromJsonToObject(responseBody, TicketResponseDTO.class);
     }
 
@@ -225,50 +226,36 @@ public class AlfrescoServiceImpl implements AlfrescoServiceInterface {
 
     @Override
     public List<NodeListDTO> returnInfileSearch(String text, Integer size, Integer skipCount) {
-        log.info("returnInfileSearch text: {}, size: {}", text, size);
-        String query = "TEXT:'" + text + "'";
-        String url = baseUrl + "/search";
-        InFIleSearchDTO inFIleSearchDTO = new InFIleSearchDTO();
-        QueryDTO queryDTO = new QueryDTO("afts", query);
-        PagingDTO pagingDTO = new PagingDTO(size, skipCount);
-        inFIleSearchDTO.setInclude(Arrays.asList("path", "properties"));
-        inFIleSearchDTO.setPaging(pagingDTO);
-        inFIleSearchDTO.setQuery(queryDTO);
+        log.info("Executing in-file search. Text: '{}', Size: {}, SkipCount: {}", text, size, skipCount);
 
+        // Construct Alfresco search query
+        String query = "TEXT:'" + text + "'";
+
+        // Prepare URL
+        String url = searchUrl;
+
+        // Construct request payload
+        InFIleSearchDTO searchDTO = new InFIleSearchDTO(
+                new QueryDTO("afts", query),
+                Arrays.asList("path", "properties"),
+                new PagingDTO(size, skipCount)
+        );
+
+        // Set headers
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBasicAuth(defaultUsername, defaultPassword);
-        Map<String, Object> requestMap = objectMapper.convertValue(inFIleSearchDTO, Map.class);
-        log.debug("This is the request map: {}", requestMap);
-        HttpEntity<Map> entity = new HttpEntity<>( requestMap , headers);
-        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
+        headers.setBasicAuth(defaultUsername, defaultPassword);  // Basic Auth
 
+        HttpEntity<InFIleSearchDTO> requestEntity = new HttpEntity<>(searchDTO, headers);
 
+        // Send request
+        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, Map.class);
+
+        // Convert and return results
         return JsonUtils.fromJsonToList(response.getBody(), NodeListDTO.class);
     }
 
 
 
-/*    private List<SitesDTO> extractSitesFromMap(Map<String, Object> responseBody) {
-        List<SitesDTO> sites = new ArrayList<>();
-
-        if (responseBody == null) return sites;
-
-        Map<String, Object> list = (Map<String, Object>) responseBody.get("list");
-        if (list == null) return sites;
-
-        List<Map<String, Object>> entries = (List<Map<String, Object>>) list.get("entries");
-        if (entries == null) return sites;
-
-        for (Map<String, Object> entryWrapper : entries) {
-            Map<String, Object> entry = (Map<String, Object>) entryWrapper.get("entry");
-            if (entry != null) {
-                SitesDTO site = objectMapper.convertValue(entry, SitesDTO.class);
-                sites.add(site);
-            }
-        }
-
-        return sites;
-    }*/
 
 }

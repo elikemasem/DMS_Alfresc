@@ -21,6 +21,7 @@ logging:
     root: info
 alfresco:
   base-url: "http://159.65.17.122:8080/alfresco/api/-default-/public/alfresco/versions/1"
+  search-url: "http://159.65.17.122:8080/alfresco/api/-default-/public/search/versions/1/search"
   auth:
     url: "http://159.65.17.122:8080/alfresco/api/-default-/public/authentication/versions/1"
     username: "senba"
