@@ -17,5 +17,6 @@ public interface AlfrescoServiceInterface {
     List<NodeListDTO> getChidrenByNodeId(String nodeId);
     byte[] downloadContent(String nodeId);
     void uploadFile(String nodeId, MultipartFile file) throws IOException;
+    List<NodeListDTO> returnInfileSearch(String text, Integer size, Integer skipCount);
 
 }
