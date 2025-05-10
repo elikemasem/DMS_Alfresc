@@ -5,7 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-
+/**
+ * This is for all nodes
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
